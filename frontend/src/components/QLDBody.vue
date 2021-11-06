@@ -1,68 +1,86 @@
 <template>
     <div class="info" >
      
-         <button class="btn btn-primary" v-on:click="clickAdd">{{msg_Btn}}</button>
-        <div class="show">
-            <label style="padding-right:5px">Show</label>
-            <input type="number" id="inputNumber" value="10"/>
-            <label>entries</label>
+         <!-- <button class="btn btn-primary" v-on:click="clickAdd">{{msg_Btn}}</button> -->
+        <div class="header-info">
+            <Button
+                class="btn-add"
+                text="Thêm"
+                @click="clickAdd"
+            />
+            <div class="show">
+                <label style="padding-right:5px">Show</label>
+                <input type="number" id="inputNumber" value="10"/>
+                <label>entries</label>
+            </div>
         </div>
+        
         <div class="tableInfo">
-           <table class="table-Info">
-             <thead style="height:50px">
-                 <th class="tieude"><input type="checkbox"/></th>
-                 <th class="tieude">#</th>
-                 <th class="tieude">Thao tác</th>
-                 <th class="tieude"><input type="text" placeholder="Search Tên thiết bị"/></th>
-                 <th class="tieude"><input type="text" placeholder="Search Mã thiết bị"/></th>
-                 <th class="tieude"><input type="text" placeholder="Search yếu tố đo"/></th>
-                 <th class="tieude"><input type="text" placeholder="Search Hãng sản xuất"/></th>
-                 <th class="tieude"><input type="text" placeholder="Model"/></th>
-                 <th class="tieude"><input type="text" placeholder="Search Trạng thái"/></th>
-             </thead>
-            <tbody>
-                <tr v-for="(homepara,index) in homeparas" v-bind:key="index">
-                    <td class="tieude"><input type="checkbox"></td>    
-                    <td class="tieude">{{index + 1}}</td>
-                    <td class="tieude"></td>
-                    <td class="tieude">{{homepara.ins_name}}</td>
-                    <td class="tieude">{{homepara.ins_id}}</td>
-                    <td class="tieude"> {{homepara.parameter_type_name}}</td>
-                    <td class="tieude">{{homepara.manufact}}</td>
-                    <td class="tieude">{{homepara.ins_model}}</td>
-                    <td class="tieude">{{homepara.status}}</td>
-                </tr>
-            </tbody>
-           </table>
+           
+           <Table
+            :data="homeparas"
+            :fields="homeparaFields"
+            :searchable="true"
+            @onclick-update="updateIns"
+           />
            
         </div>
-        <QLDAdd v-if="isSelectButton"/>
+        <div class="paging-bar">
+            <div class="paging-left">Showing...</div>
+            <div class="paging-right">
+                <Pagination/>
+            </div>
+        </div>
+        <QLDAdd v-if="isSelectButton" @cancel-form="closeAddForm" :state="stateForm"/>
     </div>
 </template>
 <script>
   import HomePara from "../services/HomePara"
   import QLDAdd from "../components/QLDAdd.vue"
+import Button from './base/Button.vue'
+import Table from './base/Table.vue'
+import Pagination from './base/Pagination.vue'
   
 export default{
    name: 'qld-body',
    components :{
-    QLDAdd
+    QLDAdd, Button,
+      Table, Pagination
    },
-   data(){
+  
+    data(){
        return{
            msg_Btn:'+Thêm',
            homeparas: [],
-           isSelectButton: false
+           isSelectButton: false,
+           homeparaFields: [
+               {name: "ins_name", text: "Search Tên thiết bị"},
+               {name: "ins_id", text: "Search Mã thiết bị"},
+               {name: "parameter_type_name", text: "Search yếu tố đo"},
+               {name: "manufact", text: "Search Hãng sản xuất"},
+               {name: "ins_model", text: "Model"},
+               {name: "status", text: "Search Trạng thái"}
+           ],
+           stateForm: "Add"
        }
    },
    methods:{
        clickAdd(){
+           this.stateForm = "add";
         this.isSelectButton = true;
        },
        getParaHome(){
           HomePara.getParaHome().then((Response) =>{
               this.homeparas = Response.data;
           })
+       },
+       closeAddForm(){
+           this.isSelectButton = false
+       },
+       updateIns(){
+           this.stateForm = "edit"
+           this.isSelectButton = true;
+
        }
    },
    created(){
@@ -72,56 +90,36 @@ export default{
 </script>
 <style>
 .info{
-  margin-top:50px;
-  display: relative;
+    width: 100%;
+    height: calc(100vh - 70px);
 }
-  .btn-primary {
-      background-color: #3385ff;
-      width: 100px;
-      height: 40px;
-      font-weight: bold;
-      margin-top: 50px;
-      margin-left: 60px ;
-      position: relative;
-      top: auto;
-      
-  }
-  .show{
-   
-      position: absolute;
-      padding-top: 20px;
-      margin-left: 60px ;
-      position: relative;
-      top:auto;
-     
-  }
+.header-info{
+    width: 100%;
+    height: 100px;
+    padding-left: 30px;
+    padding-top: 20px;
+} 
+    
+  
+    .show{
+        margin-top: 20px;
+    }
 
   #inputNumber {
      width: 50px;
     
   }
     .tableInfo {
-        margin-top: 30px;
-        position: relative;
-        top: auto;
+        margin: 0 20px;
+        height: calc(100% - 150px);
     }
 
-    .pagination {
-        margin-top: 10px;
-        float: right;
-    }
-    .table-Info {
-        border: 1 px solid black;
-       border-collapse: collapse;
-       width: 100%;
-       text-align: center;
-       
-    }
-    th,td {
-      border: 1 px solid black;
-    }
-    .tieude{
-        border: 1px solid black;
-        min-width: 40px;
+    .paging-bar {
+        height: 50px;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 30px;
     }
 </style>

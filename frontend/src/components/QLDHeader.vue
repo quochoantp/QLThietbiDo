@@ -18,14 +18,9 @@ export default {
 <style>
   header{
       height: 70px;
-      position: absolute;
       width: 100%;
-      top : 0;
-      left: 0;
       padding: 0 20px;
       z-index: 1;
-      box-sizing: border-box;
-
   }
   .text-logo {
       display: inline-block;
