@@ -2,29 +2,30 @@
     <div class="grid">
         <table class="table-Info">
              <thead>
-                 <th><input type="checkbox"/></th>
-                 <th>#</th>
-                 <th>Thao tác</th>
+                 <th class="tdNumber"><input type="checkbox"/></th>
+                 <th class="tdNumber">#</th>
+                 <th class="tdButton">Thao tác</th>
                  
-                 <th 
+                 <th class="tdInfo"
                     v-for="(field,key) in fields"
                     :key="key"
                  >
-                    <input v-if="searchable" type="text" :placeholder="field.text"/>
+                    <input class="inputSearch" v-if="searchable" type="text" :placeholder="field.text" v-model="searchData[key].text" @keyup.enter="putSearchData"/>
                     <div v-else>{{field.text}}</div>
                  </th>
              </thead>
             <tbody>
                 <tr v-for="(item,index) in data" v-bind:key="index">
-                    <td><input type="checkbox"></td>    
-                    <td>{{index + 1}}</td>
-                    <td><button class="btn-icon" @click="onClickUpdate"><i class="fas fa-edit"></i></button></td>
+                    <td class="tdNumber"><input type="checkbox"></td>    
+                    <td class="tdNumber">{{index + 1}}</td>
+                    <td class="tdButton"><button class="btn-icon"  @click="onClickUpdate(item) "><i class="fas fa-edit"></i></button></td>
                     
-                    <td
+                    <td  class="tdInfo"
                         v-for="(field, key) in fields"
                         :key="key"
                     >
-                        {{ item[field.name] }}
+                        {{getDataParse(item[field.name],field.name)}}
+                        
                     </td>
                 </tr>
             </tbody>
@@ -33,18 +34,71 @@
 </template>
 
 <script>
+import { mapActions ,mapGetters, mapMutations} from "vuex"
 export default {
+    computed: {
+    ...mapGetters(["updatedData"]),
+  },
+    data() {
+        return{
+           searchData : [
+               {name: "ins_name", text: ""},
+               {name: "ins_code", text: ""},
+               {name: "parameter_type_name", text: ""},
+               {name: "manufact", text: ""},
+               {name: "ins_model", text: ""},
+               {name: "status", text: ""},
+               {name: "is_control_enable",text:""},
+               {name: "is_observable" , text:""}
+           ],
+        //    updatedData : [
+        //        {name: "ins_name", text: ""},
+        //        {name: "ins_code", text: ""},
+        //        {name: "parameter_type_name", text: ""},
+        //        {name: "manufact", text: ""},
+        //        {name: "ins_model", text: ""},
+        //        {name: "status", text: ""},
+        //        {name: "is_control_enable",text:""},
+        //        {name: "is_observable" , text:""}
+        //    ]
+        }
+    },
     props: {
         fields: Array,
         data: Array,
+        
         searchable: {
             type: Boolean,
             default: false
         }
     },
     methods: {
-        onClickUpdate(){
-            this.$emit("onclick-update")
+       ...mapMutations(['setUpdatedData']),
+       ...mapActions(['updateProfile']),
+        onClickUpdate(item){
+            this.$emit("onclick-update",item)
+            this.updateProfile(item)
+            
+        },
+
+        getDataParse(data,item){
+          if(item == "parameter_type_name_unit"){
+              var str = "";
+             data.forEach(element => {
+                 
+                 str += element;
+                 str += "; " ;
+               
+             });
+                str = str.substring(0, str.length - 2);
+             return str;
+          } else {
+              return data;
+          }
+        },
+        putSearchData(){
+            this.$emit("putSearchData",this.searchData);
+           console.log(this.searchData);
         }
     },
 }
@@ -60,6 +114,8 @@ export default {
         border-collapse: separate;   
         width: 100%;
         border-spacing: 0;
+        table-layout: fixed;
+        
     }
     th{
         position: sticky;
@@ -67,16 +123,32 @@ export default {
         z-index: 5;
         background-color: #fff;
         border-top: 1px solid #bbb;
+       
     }
     th, td {
         height: 48px;
+        max-height: 200px;
         padding: 0 16px;
         text-align: left;
-        white-space: nowrap;
         border-bottom: 1px solid #bbb;
         border-right: 1px solid #bbb ;
+         
+    } 
+    .tdNumber{
+        text-align: center;
+        width: 50px;
+       
     }
-
+    .tdButton{
+        text-align: center;
+        width: 100px;
+        
+    }
+    .tdInfo{
+       width: 220px;
+       line-break:auto;
+       
+    }
     td:nth-child(1) {
         border-left: 1px solid #bbb;
     }
@@ -88,6 +160,12 @@ export default {
         margin-top: 48px;
         width: 6px;
         background-color: #bbb;
+    }
+    .inputSearch {
+        border-radius: 15px;
+        text-align: center;
+        width: 100%;
+        height: 60%;
     }
     .grid::-webkit-scrollbar {
         width: 5px !important;

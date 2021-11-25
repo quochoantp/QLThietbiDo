@@ -8,6 +8,7 @@
       type="text"
       v-model="cbxInput"
       @input="autocomplete"
+      ref="BaseInput"
     />
     <button @click="toggleList">
       <div class="icon-button" :class="{ reverse: isShow }"><i class="fas fa-chevron-down"></i></div>
@@ -70,19 +71,19 @@ export default {
     },
   },
   created() {
-    var me = this;
+    {var me = this;}
     this.items.forEach(function (item, index) {
       me.comboboxItems[index] = {
         value: item.value,
         text: item.text,
         isSelected: false,
       };
+
       if (me.comboboxItems[index].value === me.selectedItem) {
         me.comboboxItems[index].isSelected = true;
         me.cbxInput = me.comboboxItems[index].text;
       }
     });
-    this.comboboxItems = [...this.comboboxItems];
   },
 
   methods: {
@@ -148,8 +149,7 @@ export default {
     },
 
     /**
-     * Hàm xử lý sự kiện sử dụng bàn phím
-     * CreatedBy: PNANH (21/8/2021)
+     * Hàm xử lý sự kiện sử dụng bàn phím keycode cua cac nut len xuong va enter
      */
     keyEvent(event) {
       if (this.cbxItems.length != 0) {
@@ -201,7 +201,8 @@ export default {
   border: none;
   outline: none;
   background-color: #fff;
-  cursor: pointer;
+  cursor: pointer; 
+  position: relative;
 }
 .combobox button:hover {
   background-color: #e9ebee;
@@ -213,8 +214,7 @@ export default {
   left: 50%;
   transform: translateX(-50%) translateY(-50%) rotate(0deg);
   
-  width: 8px;
-  height: 5px;
+ 
   transition: transform 0.3s linear;
 }
 .combobox .reverse {
@@ -231,12 +231,12 @@ export default {
   border: 1px solid #babec5;
   border-radius: 2px;
   padding: 2px 0;
+  max-height: 300px;
+  overflow: auto;
 }
 
 .combobox .combobox-list .combobox-item {
-  height: 32px;
-  line-height: 32px;
-  padding-left: 16px;
+  padding: 8px 16px;
 }
 .combobox .combobox-list .combobox-item:hover {
   background-color: #ebedf0;

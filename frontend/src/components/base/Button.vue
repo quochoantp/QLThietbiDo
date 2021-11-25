@@ -1,7 +1,7 @@
 <template>
     <div>
         <button class="btn-primary" v-on="$listeners">
-            <div class="icon-button"><i class="fas fa-plus"></i></div>
+            <div class="icon-button"><i :class="icon"></i></div>
             <div class="text-button">{{text}}</div>
         </button>
     </div>
@@ -15,7 +15,8 @@ export default {
         }
     },
     props: {
-        text: String
+        text: String,
+        icon: String
     },
 }
 </script>
@@ -23,7 +24,7 @@ export default {
 <style scoped>
     .btn-primary{
         background-color: #3385ff;
-        height: 30px;
+        height: 32px;
         display: flex;
         border: none;
         outline: none;

@@ -1,22 +1,33 @@
 <template>
   <div id="app">
-    <QLDHeader/>
-    <QLDBody/>
+    <QLDHeader :screen="screen"/>
+    <Body @set-screen="setScreen"/>
   </div>
 </template>
 
 <script>
 //import QLDAdd from './components/QLDAdd.vue'
-import QLDBody from './components/QLDBody.vue'
-import QLDHeader from './components/QLDHeader.vue'
+import Body from './components/layout/Body.vue'
+import QLDHeader from './components/layout/QLDHeader.vue'
 
 
 export default {
   name: 'App',
-  components: {
+   components: {
     QLDHeader,
-    QLDBody
+    Body
+  },
+  data(){
+    return{
+      screen: "homescreen"
+    }
+  },  
+  methods: {
+    setScreen(screen){
+      this.screen = screen
+    }
   }
+ 
 }
 </script>
   
