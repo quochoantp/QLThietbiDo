@@ -1,25 +1,24 @@
 package com.example.backend.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
-import java.awt.*;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Entity
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @Table(name = "INSTRUMENTATIONS")
+@SecondaryTable(name = "INSTRUMENTATION_PARAM")
 public class Instrumentation {
     @Id
     @Column(name = "INS_ID",nullable = false)
-    private int ins_id;
+    private int insId;
 
     @Column(name = "INS_NAME", nullable = false)
     private String ins_name;
@@ -46,15 +45,26 @@ public class Instrumentation {
     private String updated_user;
 
     @Column(name = "STATUS",nullable = false)
-    private int status;
+    private String status;
 
     @Column(name = "IS_CONTROL_ENABLE")
-    private int is_control_enable;
+    private String is_control_enable;
 
     @Column(name = "IS_OBSERVABLE")
-    private int is_observable;
+    private String is_observable;
 
-    @OneToMany(mappedBy = "instrumentation", cascade = CascadeType.ALL)
-    private Collection<Instrumentation_param> instrumentation_param;
+
+    @OneToMany(mappedBy = "instrumentation", cascade = {CascadeType.ALL,CascadeType.MERGE,CascadeType.REFRESH,CascadeType.REMOVE},fetch = FetchType.LAZY)
+    //@OneToMany
+    //@JoinColumn(name = "INS_ID")
+    private List<Instrumentation_param> instrumentation_param;
+
+    public void addIns(Instrumentation_param is){
+        if(instrumentation_param != null){
+            instrumentation_param = new ArrayList<Instrumentation_param>();
+        }
+        instrumentation_param.add(is);
+        is.setInstrumentation(this);
+    }
 
 }

@@ -1,4 +1,4 @@
-package com.example.backend.entity;
+package com.example.backend.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -6,15 +6,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
-public class ParamHome {
-    private String ins_name;
+public class ParamTypeUnitIntoTable {
     private int ins_id;
+    private int unit_id;
     private String parameter_type_name;
-    private String manufact;
-    private String ins_model;
-    private int status;
-
+    private String unit_code;
 }

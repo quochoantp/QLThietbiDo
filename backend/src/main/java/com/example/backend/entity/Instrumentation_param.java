@@ -1,15 +1,12 @@
 package com.example.backend.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.hibernate.mapping.List;
+import lombok.*;
 
 import javax.persistence.*;
 import java.util.Date;
 @Entity
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -19,16 +16,14 @@ public class Instrumentation_param {
     @Column(name = "INS_PARAM_ID",nullable = false)
     private int ins_param_id;
 
-    @ManyToOne
-    @JoinColumn(name = "INS_ID",referencedColumnName = "INS_ID")
-    private Instrumentation instrumentation;
+    @Column(name = "INS_ID",nullable = false,insertable = false,updatable = false)
+    private int insId;
+    @Column(name = "PARAM_ID",nullable = false,insertable = false,updatable = false)
+    private int paramId;
 
-    @ManyToOne
-    @JoinColumn(name = "PARAM_ID", referencedColumnName = "PARAMETER_TYPE_ID")
-    private Parameter_type parameter_type;
 
     @Column(name = "STATUS" , nullable = false)
-    private int status;
+    private String status;
 
     @Column(name = "CREATED_DATE" , nullable = false)
     private Date created_date;
@@ -42,6 +37,13 @@ public class Instrumentation_param {
     @Column(name = "UPDATE_USER")
     private String update_user;
 
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
+    @JoinColumn(name = "INS_ID",referencedColumnName = "INS_ID")
+    private Instrumentation instrumentation;
+
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
+    @JoinColumn(name = "PARAM_ID", referencedColumnName = "PARAMETER_TYPE_ID")
+    private ParameterType parameter_type;
 
 
 
