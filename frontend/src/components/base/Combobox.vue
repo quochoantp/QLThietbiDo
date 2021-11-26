@@ -182,9 +182,9 @@ export default {
 .combobox {
   display: flex;
   position: relative;
-  border: 1px solid #3385ff;
+  border: 1px solid #ced4da;
   border-radius: 4px;
-  width: 150px;
+  width: 100%;
   height: 32px;
 }
 

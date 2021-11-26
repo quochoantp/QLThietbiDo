@@ -15,6 +15,13 @@
                  </th>
              </thead>
             <tbody>
+                <tr>
+                    
+                    <td class="tdNumber"><input type="checkbox"></td>    
+                    <td class="tdNumber">0</td>
+                    <td class="tdButton"><button class="btn-icon"  @click="onClickUpdate(item) "><i class="fas fa-edit"></i></button></td>
+                    
+                </tr>
                 <tr v-for="(item,index) in data" v-bind:key="index">
                     <td class="tdNumber"><input type="checkbox"></td>    
                     <td class="tdNumber">{{index + 1}}</td>
@@ -34,7 +41,7 @@
 </template>
 
 <script>
-import { mapActions ,mapGetters, mapMutations} from "vuex"
+import {mapGetters} from "vuex"
 export default {
     computed: {
     ...mapGetters(["updatedData"]),
@@ -73,11 +80,11 @@ export default {
         }
     },
     methods: {
-       ...mapMutations(['setUpdatedData']),
-       ...mapActions(['updateProfile']),
+    //    ...mapMutations(['setUpdatedData']),
+    //    ...mapActions(['updateProfile']),
         onClickUpdate(item){
             this.$emit("onclick-update",item)
-            this.updateProfile(item)
+            //this.updateProfile(item)
             
         },
 

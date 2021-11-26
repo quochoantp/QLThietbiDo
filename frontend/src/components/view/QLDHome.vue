@@ -54,8 +54,12 @@ export default {
   methods: {
     ...mapMutations(['setDataTypeUnit']),
     ...mapActions(['setDataUnit']),
+    ...mapMutations(['setUpdatedData']),
+    ...mapActions(['updateProfile']),
     openUpdateScreen(item){
       this.$emit("open-update-screen", item);
+      this.setUpdatedData()
+      this.updateProfile()
     },
     openAddScreen(){
         this.$emit("open-add-screen")

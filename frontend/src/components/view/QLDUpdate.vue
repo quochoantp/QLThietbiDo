@@ -217,7 +217,7 @@ export default {
   }
 };
 </script>
-<style>
+<style scoped>
 .dialog {
  margin: 15px 7.5px 0 7.5px;
   position: relative;
