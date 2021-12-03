@@ -1,32 +1,32 @@
 <template>
-    <div class="header">
-     <span v-if= "screen === 'homescreen'">Quản lý thiết bị đo</span>
-    <span v-else-if="screen === 'addTBDscreen'">Quản lý thiết bị đo >> Thêm mới thiết bị</span>
-    <span v-if="screen === 'updateTBDscreen'">Quản lý thiết bị đo >> Cập nhật thiết bị</span>
-    </div>
-
+  <div class="header">
+    <span v-if="screen === 'homescreen'">Quản lý thiết bị đo</span>
+    <span v-else-if="screen === 'addTBDscreen'"
+      >Quản lý thiết bị đo >> Thêm mới thiết bị</span
+    >
+    <span v-if="screen === 'updateTBDscreen'"
+      >Quản lý thiết bị đo >> Cập nhật thiết bị</span
+    >
+    <span v-if="screen === 'addParamScreen'">Quản lý yếu tố đo</span>
+  </div>
 </template>
 <script>
-
 export default {
-   props: {
-       screen : String
-   }
-    
-   
-}
+  props: {
+    screen: String,
+  },
+};
 </script>
 <style>
-  .header {
+.header {
   height: 80px;
   width: 100%;
-  background-color: #CCFFFF;
+  background-color: #ccffff;
   font-style: italic;
-  border-bottom: 1px solid rgba(0,0,0,.125);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.125);
   display: flex;
   align-items: center;
   padding-left: 24px;
   font-size: 26px;
 }
-
 </style>

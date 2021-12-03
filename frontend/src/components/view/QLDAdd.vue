@@ -6,11 +6,21 @@
         <div>
           <div class="input-label m-b-30">
             <div class="label">Tên thiết bị <span>*</span></div>
-            <Input label="Tên thiết bị" type="text" ref="input1" />
+            <Input
+              label="Tên thiết bị"
+              type="text"
+              ref="input1"
+              v-model="newInstrumentation.ins_name"
+            />
           </div>
           <div class="input-label m-b-30">
-            <div class="label">Tên thiết bị <span>*</span></div>
-            <Input type="text" />
+            <div class="label">Mã thiết bị <span>*</span></div>
+            <Input
+              label="Mã thiết bị"
+              type="text"
+              v-model="newInstrumentation.ins_code"
+              ref="input2"
+            />
           </div>
           <div class="input-label" v-if="state == 'edit'">
             <div class="label">Trạng thái <span>*</span></div>
@@ -20,21 +30,43 @@
         <div>
           <div class="input-label m-b-30">
             <div class="label">Model <span>*</span></div>
-            <Input type="text" />
+            <Input
+              label="Model"
+              type="text"
+              v-model="newInstrumentation.ins_model"
+              ref="input3"
+            />
           </div>
           <div class="input-label m-b-30">
             <div class="label">Hãng sản xuất <span>*</span></div>
-            <Input type="text" />
+            <Input
+              label="Hãng sản xuất"
+              type="text"
+              v-model="newInstrumentation.manufact"
+              ref="input4"
+            />
           </div>
         </div>
         <div>
           <div class="input-label m-b-30">
             <div class="label">Có thể điều khiển<span>*</span></div>
-            <Combobox :items="is_control" />
+            <Combobox
+              label="Có thể điều khiển"
+              :items="is_control"
+              :selectedItem="newInstrumentation.is_control_enable"
+              @update-item="(item) => updateCombobox(item, 'isControl')"
+              ref="cbx1"
+            />
           </div>
           <div class="input-label">
             <div class="label">Có thể quan sát<span>*</span></div>
-            <Combobox :items="is_observable" />
+            <Combobox
+              label="Có thể quan sát"
+              :items="is_observable"
+              :selectedItem="newInstrumentation.is_observable"
+              @update-item="(item) => updateCombobox(item, 'isObser')"
+              ref="cbx2"
+            />
           </div>
         </div>
       </div>
@@ -45,7 +77,8 @@
             <div class="label">Thông số đo <span>*</span></div>
             <Combobox
               :items="dataType"
-              @update-item="(item) => updateCombobox(item, 'AddUnit')"
+              :selectedItem="none"
+              @update-item="(item) => updateCombobox(item, 'addUnit')"
             />
           </div>
           <Button
@@ -60,27 +93,39 @@
             class="m-r-30"
             icon="fas fa-plus"
             @click="updateTypeUnit"
-            v-if="stateParam === 'add'"
+            v-show="stateYtd === 'add'"
           />
           <Button
             text="Cập nhật"
             class="m-r-30"
             icon="fas fa-plus"
-            @click="updateTypeUnit"
-            v-if="stateParam === 'edit'"
+            @click="updateSelectedItem"
+            v-show="stateYtd === 'edit'"
           />
-          <Button text="Làm mới" icon="fas fa-redo" />
+          <Button
+            text="Làm mới"
+            icon="fas fa-redo"
+            @click="reloadCombobox"
+            v-show="stateYtd === 'add'"
+          />
+          <Button
+            text="Xóa"
+            icon="fas fa-trash"
+            v-show="stateYtd === 'edit'"
+            @click="deleteSelectedItem"
+          />
         </div>
         <div>
           <div class="show">
-            <label style="padding-right: 5px">Show</label>
+            <!-- <label style="padding-right: 5px">Show</label>
             <input type="number" id="inputNumber" value="10" />
-            <label>entries</label>
+            <label>entries</label> -->
           </div>
           <Table
             :fields="fieldTables"
             :data="dataTypeUnitTable"
-            @onclick-update="onClickUpdate"
+            :perPage="page"
+            @onclick-update="clickUpdate"
           />
         </div>
       </div>
@@ -88,8 +133,18 @@
         <!-- <Button v-if="state == 'add'" class="m-r-30" text="Lưu" />
         <Button v-if="state == 'add'" class="m-r-30" text="Làm mới" />
         <Button v-if="state == 'edit'" class="m-r-30" text="Cập nhật" /> -->
-        <Button class="m-r-30" text="Lưu" icon="fas fa-save" />
-        <Button class="m-r-30" text="Làm mới" icon="fas fa-redo" />
+        <Button
+          class="m-r-30"
+          text="Lưu"
+          icon="fas fa-save"
+          @click="addNewIns"
+        />
+        <Button
+          class="m-r-30"
+          text="Làm mới"
+          icon="fas fa-redo"
+          @click="reloadForm"
+        />
         <Button text="Hủy" icon="fas fa-backspace" @click="cancelForm" />
       </div>
     </div>
@@ -98,11 +153,18 @@
 <script>
 import { mapGetters } from "vuex";
 import Input from "../base/Input.vue";
-
+import InstrumentationApi from "../../services/InstrumentApi";
+// import HomePara from "../../services/HomePara";
 export default {
   components: { Input },
   data() {
     return {
+      none: "",
+      newId: 1000,
+      stateYtd: "add",
+      newInsParamId: 1000,
+      page: 4,
+      newInstrumentation: {},
       fieldTables: [
         { name: "parameter_type_name", text: "Yếu tố đo" },
         { name: "unit_code", text: "Đơn vị đo" },
@@ -110,17 +172,25 @@ export default {
       dataTypeUnitTable: [],
       dataType: [],
       is_control: [
-        { value: "Có thể điều khiển", text: "Có" },
-        { value: "Không thể điều khiển", text: "Không" },
+        { value: 1, text: "Có" },
+        { value: 0, text: "Không" },
       ],
       is_observable: [
-        { value: "Có thể quan sát", text: "Có" },
-        { value: "Không thể quan sát", text: "Không" },
+        { value: 1, text: "Có" },
+        { value: 0, text: "Không" },
       ],
       dataTypeTransfer: {
+        parametertypeid: "",
         unit_id: "",
         parameter_type_name: "",
         unit_code: "",
+      },
+      datagetFromTable: {},
+      dataInsIdParamIdArray: [],
+      dataInsIdParamId: {
+        insParamId: "",
+        insId: "",
+        parametertypeid: "",
       },
 
       stateParam: "add",
@@ -133,18 +203,149 @@ export default {
     state: String,
   },
   methods: {
+    validate() {
+      var me = this;
+      let isValid = true;
+      this.indexInvalid = [];
+      Object.entries(this.$refs).forEach(function (item, index) {
+        item[1].$refs.BaseInput.focus();
+        item[1].$refs.BaseInput.blur();
+        item[1].isShowMsg = false;
+
+        if (item[1].invalid == true) {
+          isValid = false;
+          me.indexInvalid.push(index);
+        }
+      });
+      if (isValid == false) {
+        // Hiển thị popup cảnh báo dữ liệu không hợp lệ
+        alert("Dữ liệu không hợp lệ");
+        Object.entries(this.$refs)[
+          this.indexInvalid[0]
+        ][1].$refs.BaseInput.focus();
+
+        Object.entries(this.$refs)[this.indexInvalid[0]][1].isShowMsg = true;
+        console.log(Object.entries(this.$refs)[this.indexInvalid[0]]);
+      }
+      return isValid;
+    },
+    clickUpdate(item) {
+      this.stateYtd = "edit";
+      this.datagetFromTable = item;
+    },
+    reloadForm() {
+      this.newInstrumentation.ins_name = "";
+      this.newInstrumentation.ins_code = "";
+      this.newInstrumentation.ins_model = "";
+      this.newInstrumentation.manufact = "";
+      this.newInstrumentation.is_control_enable = "";
+      this.newInstrumentation.is_observable = "";
+    },
+
+    reloadCombobox() {
+      this.none = "";
+    },
+    async updateSelectedItem() {
+      const data = Object.assign({}, this.dataTypeTransfer);
+      if (this.dataTypeUnitTable != null) {
+        for (let i of this.dataTypeUnitTable) {
+          if (i.unit_id == data.unit_id) {
+            return;
+          }
+        }
+      }
+      if (data.unit_id != null) {
+        await this.dataTypeUnitTable.push(data);
+      }
+      const index = this.dataTypeUnitTable.indexOf(this.datagetFromTable);
+      if (index > -1) {
+        this.dataTypeUnitTable.splice(index, 1);
+      }
+      this.dataTypeTransfer = {};
+      this.stateYtd = "add";
+    },
+    deleteSelectedItem() {
+      const index = this.dataTypeUnitTable.indexOf(this.datagetFromTable);
+      if (index > -1) {
+        this.dataTypeUnitTable.splice(index, 1);
+      }
+      this.dataTypeTransfer = {};
+      this.stateYtd = "add";
+    },
     updateCombobox(itemUpdate, type) {
-      if (type == "AddUnit") {
+      this.none = itemUpdate.value;
+      if (type == "addUnit") {
         var me = this;
         this.dataTypeUnit.forEach(function (item) {
           if (item.unit_id == itemUpdate.value) {
+            me.dataTypeTransfer.parametertypeid = item.parametertypeid;
             me.dataTypeTransfer.unit_id = item.unit_id;
             me.dataTypeTransfer.parameter_type_name = item.parameter_type_name;
             me.dataTypeTransfer.unit_code = item.unit_code;
             console.log(me.dataTypeTransfer);
           }
         });
+      } else if (type == "isControl") {
+        this.newInstrumentation = {
+          ...this.newInstrumentation,
+          is_control_enable: itemUpdate.value,
+        };
+      } else if (type == "isObser") {
+        this.newInstrumentation = {
+          ...this.newInstrumentation,
+          is_observable: itemUpdate.value,
+        };
       }
+    },
+    async addNewIns() {
+      if (this.validate() == true) {
+        try {
+          this.newInstrumentation = { ...this.newInstrumentation };
+          const res = await InstrumentationApi.addNewInstrumentation(
+            this.newInstrumentation
+          );
+          console.log(res);
+          if (res.status === 200) {
+            console.log(this.dataTypeUnitTable);
+            this.addNewParamToIns();
+            alert("Thêm thành công");
+          }
+          this.$emit("cancel-form");
+        } catch (error) {
+          alert("Có lỗi xảy ra tai them instrument " + error);
+        }
+      }
+    },
+    async addNewParamToIns() {
+      var me = this;
+
+      this.dataTypeUnitTable.forEach(async function (item) {
+        // me.dataInsIdParamId.insParamId = me.newInsParamId;
+        me.dataInsIdParamId.insId = me.newId;
+        me.dataInsIdParamId.parametertypeid = item.parametertypeid;
+        const data = Object.assign({}, me.dataInsIdParamId);
+        await me.dataInsIdParamIdArray.push(data);
+        // me.newInsParamId++;
+        me.dataInsIdParamId = {};
+      });
+      await InstrumentationApi.addNewParamToIns(this.dataInsIdParamIdArray);
+    },
+
+    getNewInsParamId() {
+      InstrumentationApi.getNewInsParamId().then((Response) => {
+        this.newInsParamId = Response.data;
+        console.log(this.newInsParamId);
+      });
+    },
+    getNewIns() {
+      InstrumentationApi.getNewId().then((Response) => {
+        this.newId = Response.data;
+        this.newInstrumentation.insId = this.newId;
+        console.log(this.newId);
+      });
+    },
+    resetForm() {
+      this.newInstrumentation = {};
     },
     getDataType() {
       var me = this;
@@ -159,15 +360,19 @@ export default {
     cancelForm() {
       this.$emit("cancel-form");
     },
-    updateTypeUnit() {
+    async updateTypeUnit() {
       var me = this;
       const data = Object.assign({}, this.dataTypeTransfer);
-      for (let i of this.dataTypeUnitTable) {
-        if (i.unit_id == data.unit_id) {
-          return;
+      if (this.dataTypeUnitTable != null) {
+        for (let i of this.dataTypeUnitTable) {
+          if (i.unit_id == data.unit_id) {
+            return;
+          }
         }
       }
-      me.dataTypeUnitTable.push(data);
+      if (data.unit_id != null) {
+        await me.dataTypeUnitTable.push(data);
+      }
       console.log(me.dataTypeUnitTable);
       me.dataTypeTransfer = {};
     },
@@ -181,6 +386,8 @@ export default {
 
   created() {
     this.getDataType();
+    this.getNewIns();
+    this.getNewInsParamId();
   },
 };
 </script>
@@ -238,7 +445,7 @@ export default {
 }
 #ins-info > div {
   flex: 1;
-  margin: 0 16px
+  margin: 0 16px;
 }
 .m-b-30 {
   margin-bottom: 30px;
@@ -266,11 +473,11 @@ export default {
   margin-right: 30px;
 }
 
-.input-label {
+/* .input-label {
   
-}
+} */
 .label {
-  margin-right: 20px;
+  width: 150px;
   color: #3385ff;
 }
 .label span {
@@ -280,5 +487,4 @@ export default {
 #param-measure {
   display: flex;
 }
-
 </style>

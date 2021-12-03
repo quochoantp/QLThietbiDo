@@ -4,7 +4,6 @@
       <div class="title m-b-30">Thông tin yếu tố</div>
 
       <div class="form-row" id="row-1">
-        
         <div class="input-label m-b-30">
           <div class="label">Tên yếu tố <span>*</span></div>
           <!-- <input
@@ -18,14 +17,14 @@
           <Input
             label="Tên yếu tố"
             type="text"
-            
+            v-model="unitName"
             ref="input1"
           />
         </div>
       </div>
       <div class="form-row">
         <div class="input-label m-b-30">
-          <div class="label">Vị trí lắp đặt <span>*</span></div>
+          <div class="label">Mô tả</div>
           <!-- <input
             class="input-box"
             type="text"
@@ -33,49 +32,43 @@
             @blur="onBlur($event.target)"
             ref="input2"
           /> -->
-          <Input
-            label="Mô tả"
-            type="text"
-            
-            ref="input2"
-          />
+          <Input label="Mô tả" type="text" v-model="description" />
         </div>
         <div class="input-label m-b-30">
           <div class="label">Đơn vị tính <span>*</span></div>
           <Combobox
-            :items="cameraStatus"
-            :selectedItem="camera.status"
-            @update-item="(item) => updateCombobox(item, 'status')"
-            ref="cbx2"
             label="Đơn vị tính"
+            :items="unitListExport"
+            :selectedItem="unitIdParam"
+            ref="cbx1"
+            @update-item="(item) => updateCombobox(item, 'updateUnit')"
           />
         </div>
       </div>
-      
     </div>
 
     <div class="wrap-button">
       <Button
-        v-if="state === 'add'"
+        v-show="state === 'add'"
         class="btn"
         text="Lưu"
         icon="fas fa-plus"
-        @click="addCamera"
+        @click="addNewUnitMethod"
       />
-      
+
       <Button
-        v-if="state === 'add'"
+        v-show="state === 'add'"
         class="btn"
         text="Làm mới"
         icon="fas fa-redo"
         @click="resetForm"
       />
       <Button
-        v-else-if="state === 'edit'"
+        v-show="state === 'edit'"
         class="btn"
         text="Cập nhật"
         icon="fas fa-edit"
-        @click="updateCamera"
+        @click="updateUnitParam"
       />
       <Button
         class="btn"
@@ -88,7 +81,7 @@
     <div class="grid-container">
       <div class="grid-header">
         Show
-        <select v-model="perPage">
+        <select style="margin-left: 10px; margin-right: 10px" v-model="page">
           <option value="10">10</option>
           <option value="25">25</option>
           <option value="50">50</option>
@@ -98,159 +91,89 @@
       </div>
       <div class="grid">
         <Table
-          :data="cameras"
+          :data="paraUnitList"
           :fields="paramFields"
-          :inputSearch="cameraFilter"
+          :state="stateUnit"
+          :searchData="searchDataUnit"
+          :searchable="true"
+          @putSearchData="putSearchData"
           iconOperation="fas fa-edit"
+          :perPage="page"
           @onclick-update="clickUpdate"
-          @search="getCameraFilter"
         />
-      </div>
-    </div>
-
-    <div class="paging-bar">
-      <div class="paging-left">
-        Showing {{ firstIndex }} to {{ lastIndex }} of
-        {{ totalRecords }} entries
-      </div>
-      <div class="paging-right">
-        <!-- <Pagination
-          :total-pages="totalPages"
-          :current-page="currentPage"
-          @pagechanged="onPageChange"
-        /> -->
       </div>
     </div>
   </div>
 </template>
 
 <script>
-
+import HomePara from "../../services/HomePara";
+import UnitApi from "../../services/UnitApi";
 export default {
   data() {
     return {
+      stateUnit: "Unit",
+      page: 10,
       state: "add",
-      cameraStatus: [
-        { value: 0, text: "Không dùng/Không có/Xóa" },
-        { value: 1, text: "Có trong trạm" },
-        { value: 2, text: "Đang lỗi" },
-        { value: 3, text: "Đang mang đi bảo hành" },
+      unitList: [],
+      unitListExport: [],
+      paraUnitList: [],
+      searchDataUnit: [
+        { name: "unit_name", text: "" },
+        { name: "unit_code", text: "" },
+        { name: "description", text: "" },
       ],
       paramFields: [
         {
-          name: "cameraName",
+          name: "unit_name",
           text: "Search Tên yếu tố",
-          typeSearch: "input",
-          value: "",
         },
+
         {
-          name: "insName",
-          text: "Search mô tả",
-          typeSearch: "input",
-          value: "",
-        },
-        {
-          name: "position",
+          name: "unit_code",
           text: "Search đơn vị",
-          typeSearch: "input",
-          value: "",
         },
-        
+        {
+          name: "description",
+          text: "Search mô tả",
+        },
       ],
-      cameras: [],
-      camera: {},
-      instrumentations: [],
-      instrumentationCombobox: [],
 
-      // pagination
-      currentPage: 1,
-      totalPages: 0,
-      totalRecords: 0,
-      perPage: 10,
-      cameraFilter: {
-        cameraName: "",
-        insName: "",
-        statusName: "",
-        position: "",
-      },
-
+      unitName: "",
+      description: "",
+      unitCode: "",
+      unitIdParam: "",
+      unitId: 0,
       indexInvalid: [],
+      itemAdd: {
+        unit_name: "",
+        unit_code: "",
+        description: "",
+      },
+      itemUpdate: {
+        unit_id: "",
+        unit_name: "",
+        unit_code: "",
+        description: "",
+      },
     };
   },
 
-  props: {
-    station: Object,
-  },
-  watch: {
-    perPage() {
-      this.getCameraFilter(this.cameraFilter);
-    },
-  },
-  computed: {
-    firstIndex() {
-      if (this.totalRecords > 0)
-        return this.perPage * (this.currentPage - 1) + 1;
-      else return 0;
-    },
-    lastIndex() {
-      return this.perPage * this.currentPage < this.totalRecords
-        ? this.perPage * this.currentPage
-        : this.totalRecords;
-    },
-  },
+  props: {},
 
   created() {
-    this.createData();
+    this.getDataTable();
+    this.getUnitCode();
   },
-
   methods: {
-    // async createData() {
-    //   const promise = await Promise.all([
-    //     CameraApi.getPagingAndFilter(
-    //       this.station.stationId,
-    //       this.cameraFilter,
-    //       1,
-    //       this.perPage
-    //     ),
-    //     InstrumentationApi.getAll(),
-    //   ]);
-
-    //   this.cameras = await promise[0].data.records;
-    //   this.totalPages = promise[0].data.totalPages;
-    //   this.totalRecords = promise[0].data.totalRecords;
-    //   this.instrumentations = await promise[1].data;
-    //   var me = this;
-    //   this.instrumentations.forEach(function (item, index) {
-    //     me.instrumentationCombobox[index] = {
-    //       value: item.insId,
-    //       text: `${item.insCode} - ${item.insName} - ${item.manufact}`,
-    //     };
-    //   });
-    //   this.instrumentationCombobox = [...this.instrumentationCombobox];
-    // },
-    closeScreen() {
-      this.$emit("close-screen");
-    },
-    clickUpdate() {
-      this.state = "edit";
-      //this.camera = item;
-    },
-    updateCombobox(item, type) {
-      if (type === "instrumentation") {
-        this.camera = { ...this.camera, cameraId: item.value };
-      } else if (type === "status") {
-        this.camera = { ...this.camera, status: item.value };
-      }
-    },
     validate() {
       var me = this;
       let isValid = true;
       this.indexInvalid = [];
       Object.entries(this.$refs).forEach(function (item, index) {
-        
-          item[1].$refs.BaseInput.focus();
-          item[1].$refs.BaseInput.blur();
-          item[1].isShowMsg = false
+        item[1].$refs.BaseInput.focus();
+        item[1].$refs.BaseInput.blur();
+        item[1].isShowMsg = false;
 
         if (item[1].invalid == true) {
           isValid = false;
@@ -259,93 +182,117 @@ export default {
       });
       if (isValid == false) {
         // Hiển thị popup cảnh báo dữ liệu không hợp lệ
-        //var errorMsg = Object.entries(this.$refs)[this.indexInvalid[0]][1].message;
-        //this.setPopup(errorMsg, 'error', 'validateEmpty')
-        Object.entries(this.$refs)[this.indexInvalid[0]][1].$refs.BaseInput.focus();
+        alert("Dữ liệu không hợp lệ");
+        Object.entries(this.$refs)[
+          this.indexInvalid[0]
+        ][1].$refs.BaseInput.focus();
 
         Object.entries(this.$refs)[this.indexInvalid[0]][1].isShowMsg = true;
-        console.log(Object.entries(this.$refs)[this.indexInvalid[0]])
+        console.log(Object.entries(this.$refs)[this.indexInvalid[0]]);
       }
       return isValid;
     },
-    // async addCamera() {
-    //   var valid = this.validate();
-    //   console.log(valid)
-    //   if (valid == true) {
-    //     try {
-    //       this.camera = { ...this.camera, stationId: this.station.stationId };
-    //       const res = await CameraApi.add(this.camera);
-    //       console.log(res);
-    //       if (res.status === 201) {
-    //         alert("Thêm thành công");
-    //       } 
-    //       this.reloadData();
-    //     } catch (error) {
-    //       alert("Có lỗi xảy ra" + error);
-    //     }
-    //   } 
-    // },
-    // async updateCamera() {
-    //   try {
-    //     this.camera = { ...this.camera, stationId: this.station.stationId };
-    //     console.log(this.camera);
-    //     const res = await CameraApi.update(this.camera.id, this.camera);
-    //     console.log(res);
-
-    //     alert("Cập nhật thành công");
-    //     this.reloadData();
-    //   } catch (error) {
-    //     alert("Có lỗi xảy ra" + error);
-    //   }
-    // },
-    resetForm() {
-      this.camera = {};
+    async addNewUnitMethod() {
+      if (this.validate() == true) {
+        this.itemAdd.unit_name = this.unitName;
+        this.itemAdd.unit_code = this.unitCode;
+        this.itemAdd.description = this.description;
+        console.log(this.itemAdd);
+        try {
+          this.itemAdd = { ...this.itemAdd };
+          const res = await UnitApi.addNewUnit(this.itemAdd);
+          console.log(res);
+          if (res.status === 200) {
+            alert("Thêm thành công");
+            this.$emit("close-screen");
+          }
+        } catch (error) {
+          alert("Có lỗi xảy ra tai addUnit " + error);
+        }
+      }
     },
-    // async reloadData() {
-    //   this.cameras = [];
-    //   try {
-    //     const res = await CameraApi.getPagingAndFilter(
-    //       this.station.stationId,
-    //       this.cameraFilter,
-    //       1,
-    //       this.perPage
-    //     );
-    //     this.cameras = res.data.records;
-    //     this.totalPages = res.data.totalPages;
-    //     this.totalRecords = res.data.totalRecords;
-    //   } catch (error) {
-    //     alert("Có lỗi xảy ra" + error);
-    //   }
-    // },
-    // async getCameraFilter(inputSearch) {
-    //   this.cameras = [];
-    //   this.currentPage = 1;
-
-    //   this.cameraFilter = inputSearch;
-    //   const res = await CameraApi.getPagingAndFilter(
-    //     this.station.stationId,
-    //     inputSearch,
-    //     this.currentPage,
-    //     this.perPage
-    //   );
-    //   this.totalPages = res.data.totalPages;
-    //   this.totalRecords = res.data.totalRecords;
-    //   this.cameras = res.data.records;
-    //   console.log(res.data);
-    // },
-
-    // async onPageChange(page) {
-    //   console.log(page);
-    //   this.currentPage = page;
-    //   this.cameras = [];
-    //   const res = await CameraApi.getPagingAndFilter(
-    //     this.station.stationId,
-    //     this.cameraFilter,
-    //     page,
-    //     this.perPage
-    //   );
-    //   this.cameras = res.data.records;
-    // },
+    async putSearchData(searchData) {
+      console.log(this.searchDataUnit);
+      var str = "search?";
+      searchData.forEach((element) => {
+        str += element.name;
+        str += "=";
+        str += element.text;
+        str += "&";
+      });
+      str.slice(0, -1);
+      this.paraUnitList = [];
+      const response = await UnitApi.findUnitTable(str);
+      this.paraUnitList = response.data;
+      console.log(this.paraUnitList);
+    },
+    getDataTable() {
+      HomePara.getUnitCodeList().then((Response) => {
+        this.paraUnitList = Response.data;
+      });
+    },
+    resetForm() {
+      this.unitName = "";
+      this.description = "";
+      this.unitCode = "";
+      this.unitIdParam = "";
+    },
+    closeScreen() {
+      this.$emit("close-screen");
+    },
+    clickUpdate(item) {
+      this.state = "edit";
+      console.log(item);
+      this.unitName = item.unit_name;
+      this.description = item.description;
+      this.unitCode = item.unit_code;
+      this.unitIdParam = item.unit_id;
+    },
+    async updateUnitParam() {
+      this.itemUpdate.unit_name = this.unitName;
+      this.itemUpdate.unit_code = this.unitCode;
+      this.itemUpdate.description = this.description;
+      this.itemUpdate.unit_id = this.unitIdParam;
+      try {
+        this.itemUpdate = { ...this.itemUpdate };
+        const res = await UnitApi.updateUnit(
+          this.itemUpdate,
+          this.itemUpdate.unit_id
+        );
+        console.log(res);
+        if (res.status === 200) {
+          alert("Cập nhật thành công");
+        }
+        this.$emit("close-screen");
+      } catch (error) {
+        alert("Có lỗi xảy ra tai updateUnit " + error);
+      }
+    },
+    getUnitCode() {
+      var me = this;
+      HomePara.getUnitCodeList().then((Response) => {
+        this.unitList = Response.data;
+        console.log(this.unitList);
+        me.unitList.forEach(function (item, index) {
+          me.unitListExport[index] = {
+            value: item.unit_id,
+            text: item.unit_code,
+          };
+        });
+        console.log(this.unitListExport);
+        this.unitListExport = [...this.unitListExport];
+      });
+    },
+    updateCombobox(itemUpdate, type) {
+      if (type == "updateUnit") {
+        var me = this;
+        this.unitList.forEach(function (item) {
+          if (item.unit_id == itemUpdate.value) {
+            me.unitCode = item.unit_code;
+          }
+        });
+      }
+    },
     
   },
 };
@@ -373,7 +320,7 @@ export default {
   margin-bottom: 16px;
 }
 #row-1 {
-    margin-top: 16px;
+  margin-top: 16px;
 }
 
 .input-label {

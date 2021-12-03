@@ -17,5 +17,15 @@ class HomePara{
     async getParaUnitTable(id){
       return await axios.get(`http://localhost:8085/api/getParaTypeTable/${id}`);
    }
+   async putUpdateInstrument(id){
+      return await axios.put(`http://localhost:8085/api/update/${id}`)
+   }
+   //lay du lieu cho bang them moi yeu to do
+   async getParameterUnitList(){
+      return await axios.get('http://localhost:8085/api/param/getParamList')
+   }
+   async getUnitCodeList(){
+      return await axios.get('http://localhost:8085/api/unit/getUnitList')
+   }
 }
 export default new HomePara()

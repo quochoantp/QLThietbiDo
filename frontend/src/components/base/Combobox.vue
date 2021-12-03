@@ -1,38 +1,39 @@
 <template>
-  <div
-    class="combobox"
-    @keydown="keyEvent($event)"
-  >
-    <input
-      class="combobox-text"
-      type="text"
-      v-model="cbxInput"
-      @input="autocomplete"
-      ref="BaseInput"
-    />
-    <button @click="toggleList">
-      <div class="icon-button" :class="{ reverse: isShow }"><i class="fas fa-chevron-down"></i></div>
-    </button>
-    <div
-      v-if="isShow"
-      class="combobox-list"
-    >
-      <div
-        class="combobox-item"
-        v-for="(cbxItem, index) in cbxItems"
-        :class="{
-          selected: cbxItem.isSelected,
-          'focus-item': index == currentFocus,
-        }"
-        :key="index"
-        @click="clickItem(cbxItem)"
-      >
-        {{ cbxItem.text }}
+  <div>
+    <div class="combobox" @keydown="keyEvent($event)">
+      <input
+        class="combobox-text"
+        type="text"
+        v-model="cbxInput"
+        @input="autocomplete"
+        @blur="onBlur($event.target)"
+        ref="BaseInput"
+      />
+      <button @click="toggleList">
+        <div class="icon-button" :class="{ reverse: isShow }">
+          <i class="fas fa-chevron-down"></i>
+        </div>
+      </button>
+      <div v-if="isShow" class="combobox-list">
+        <div
+          class="combobox-item"
+          v-for="(cbxItem, index) in cbxItems"
+          :class="{
+            selected: cbxItem.isSelected,
+            'focus-item': index == currentFocus,
+          }"
+          :key="index"
+          @click="clickItem(cbxItem)"
+        >
+          {{ cbxItem.text }}
+        </div>
       </div>
+    </div>
+    <div v-show="isShowMsg" class="msg" ref="Message">
+      {{ message }}
     </div>
   </div>
 </template>
-
 
 <script>
 export default {
@@ -45,16 +46,21 @@ export default {
       type: Boolean,
       default: false,
     },
+    label: String,
   },
   data() {
     return {
       comboboxItems: [],
       isShow: false,
+      isShowMsg: false,
       cbxInput: "",
       cbxItems: [],
       currentFocus: 0,
+      message: "",
+      invalid: false,
     };
   },
+
   watch: {
     selectedItem: {
       handler: function (val) {
@@ -69,9 +75,30 @@ export default {
       },
       deep: true,
     },
+    items: {
+      handler: function (items) {
+        var me = this;
+        items.forEach(function (item, index) {
+          me.comboboxItems[index] = {
+            value: item.value,
+            text: item.text,
+            isSelected: false,
+          };
+          if (me.comboboxItems[index].value === me.selectedItem) {
+            me.comboboxItems[index].isSelected = true;
+            me.cbxInput = me.comboboxItems[index].text;
+          }
+        });
+        this.comboboxItems = [...this.comboboxItems];
+        console.log(this.comboboxItems);
+      },
+      deep: true,
+    },
   },
   created() {
-    {var me = this;}
+    {
+      var me = this;
+    }
     this.items.forEach(function (item, index) {
       me.comboboxItems[index] = {
         value: item.value,
@@ -87,10 +114,16 @@ export default {
   },
 
   methods: {
-    /**
-     * Hàm xử lý khi nhấn vào button toggle
-     * CreatedBy: PNANH (21/8/2021)
-     */
+    onBlur(e) {
+      if (e.value == "") {
+        this.invalid = true;
+        this.message = `${this.label} không được để trống`;
+      } else {
+        this.invalid = false;
+        this.message = "";
+      }
+    },
+
     toggleList() {
       this.isShow = !this.isShow;
       //this.$refs.BaseInput.focus();
@@ -99,10 +132,8 @@ export default {
       this.currentFocus = 0;
     },
 
-
     /**
      * Hàm xử lý khi chọn 1 item trong combobox
-     * CreatedBy: PNANH (21/8/2021)
      */
     clickItem(cbxItem) {
       this.$refs.BaseInput.focus();
@@ -117,15 +148,10 @@ export default {
         }
       });
 
-      //this.$refs.BaseInput.blur();
       this.isShow = !this.isShow;
       console.log(this.comboboxItems);
     },
 
-    /**
-     * Hàm autocomplete
-     * CreatedBy: PNANH (21/8/2021)
-     */
     autocomplete() {
       this.currentFocus = 0;
       var me = this;
@@ -184,6 +210,7 @@ export default {
   position: relative;
   border: 1px solid #ced4da;
   border-radius: 4px;
+  margin-right: 10px;
   width: 100%;
   height: 32px;
 }
@@ -201,7 +228,7 @@ export default {
   border: none;
   outline: none;
   background-color: #fff;
-  cursor: pointer; 
+  cursor: pointer;
   position: relative;
 }
 .combobox button:hover {
@@ -213,8 +240,7 @@ export default {
   top: 50%;
   left: 50%;
   transform: translateX(-50%) translateY(-50%) rotate(0deg);
-  
- 
+
   transition: transform 0.3s linear;
 }
 .combobox .reverse {
@@ -250,9 +276,10 @@ export default {
   align-items: center;
   line-height: 32px;
 }
-
+.msg {
+  color: crimson;
+}
 .focus-item {
   background-color: #ebedf0;
 }
-
 </style>
